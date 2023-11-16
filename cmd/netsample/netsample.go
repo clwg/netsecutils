@@ -6,9 +6,8 @@ import (
 	"log"
 	"time"
 
-
-	"github.com/clwg/netsecutils/packets"
-	"github.com/clwg/netsecutils/logging"
+	jsonllogger "github.com/clwg/netsecutils/logging"
+	packetprocessing "github.com/clwg/netsecutils/packets"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/pcap"
 )
@@ -40,7 +39,7 @@ func main() {
 	config := jsonllogger.LoggerConfig{
 		FilenamePrefix: "netsample",
 		LogDir:         "./logs",
-		MaxLines:       100,
+		MaxLines:       50000,
 		RotationTime:   30 * time.Minute,
 	}
 
