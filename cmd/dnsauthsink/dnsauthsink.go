@@ -18,7 +18,7 @@ var (
 )
 
 func main() {
-	flag.StringVar(&defaultAnswer, "default-answer", "192.0.2.1", "Default answer for DNS queries")
+	flag.StringVar(&defaultAnswer, "default-answer", "127.0.0.1", "Default answer for DNS queries")
 	flag.Parse()
 
 	// Initialize database
