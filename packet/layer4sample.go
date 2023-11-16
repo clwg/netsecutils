@@ -97,20 +97,5 @@ func (s *Service) Process(packet gopacket.Packet) {
 		s.cache.Set(compoundKey, nil, cache.DefaultExpiration)
 		s.logger.Log(data)
 
-		/*
-			jsonData, err := json.Marshal(data)
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-			fmt.Println(string(jsonData))
-		*/
-
-		/*
-			fmt.Printf("%v, %s, %s, %s, %d, %s, %s, %d, %s\n",
-				data.L4Sample.Timestamp, data.UUID, data.SourceMAC, data.SourceIP, data.L4Sample.SourcePort,
-				data.DestinationMAC, data.DestinationIP, data.L4Sample.DestinationPort, data.Protocol)
-		*/
-
 	}
 }
