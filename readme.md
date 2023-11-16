@@ -1,1 +1,2 @@
-a collection of golang based network security utilities
+# netsecutils
+A collection of various golang based tools for network analysis and monitoring.
