@@ -1,11 +1,11 @@
-package packetprocessing
+package layer4sample
 
 import (
 	"fmt"
 	"time"
 
+	jsonllogger "github.com/clwg/netsecutils/logging"
 	"github.com/clwg/netsecutils/utils"
-	"github.com/clwg/netsecutils/logging"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/patrickmn/go-cache" // Import the go-cache library

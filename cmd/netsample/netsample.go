@@ -7,7 +7,7 @@ import (
 	"time"
 
 	jsonllogger "github.com/clwg/netsecutils/logging"
-	packetprocessing "github.com/clwg/netsecutils/packets"
+	layer4sample "github.com/clwg/netsecutils/packet"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/pcap"
 )
@@ -48,7 +48,7 @@ func main() {
 		panic(err)
 	}
 
-	processor := packetprocessing.NewService(jsonLogger)
+	processor := layer4sample.NewService(jsonLogger)
 	logger := &ConsoleLogger{}
 
 	if *pcapFile != "" {
