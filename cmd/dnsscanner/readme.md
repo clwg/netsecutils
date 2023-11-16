@@ -12,6 +12,10 @@ A Go-based application that performs DNS queries for specified domains and netwo
 
 Usage
 ```sh
+go run main.go -domain <domain> -network <network> [-domains <domains>] [-timeout <timeout>] [-db <dbfile>]
+```
+--help
+```sh
 --domain: Specify the domain to query.
 --network: Define the network range for querying.
 --timeout: Set the timeout for DNS queries in seconds (default: 5).
