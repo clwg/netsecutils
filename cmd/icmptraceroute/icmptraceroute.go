@@ -17,7 +17,7 @@ const (
 
 func main() {
 	if len(os.Args) != 2 {
-		fmt.Println("Usage: traceroute [host]")
+		fmt.Println("Usage: icmptraceroute [host]")
 		os.Exit(1)
 	}
 	targetHost := os.Args[1]
