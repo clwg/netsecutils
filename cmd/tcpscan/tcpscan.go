@@ -102,7 +102,6 @@ func main() {
 	wg.Wait()
 
 	for host, ports := range openPorts {
-		fmt.Printf("Open ports on %s: %v\n", host, ports)
 		for _, port := range ports {
 			banner, err := grabBanner(host, port)
 			if err != nil {
