@@ -59,8 +59,6 @@ func main() {
 		records.SRV = append(records.SRV, dnsrecord.GetSRVRecords(domain, svc.service, svc.protocol)...)
 	}
 
-	// ... and so on for each type of record
-
 	// Serialize to JSON
 	jsonBytes, err := json.MarshalIndent(records, "", "    ")
 	if err != nil {
