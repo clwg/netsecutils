@@ -6,14 +6,15 @@ import (
 )
 
 type ARecord struct {
-	IP   string `json:"ip"`
-	Type uint16 `json:"type"`
-	TTL  uint32 `json:"ttl"`
+	RNAME string `json:"rname"`
+	IP    string `json:"ip"`
+	Type  uint16 `json:"type"`
+	TTL   uint32 `json:"ttl"`
 }
 
 type CNAMERecord struct {
-	QueryName string `json:"query_name"`
-	Alias     string `json:"alias"`
+	Name  string `json:"name"`
+	Alias string `json:"alias"`
 }
 
 func GetARecords(domain string) ([]ARecord, []CNAMERecord) {
@@ -39,15 +40,16 @@ func parseARecord(rr dns.RR) ARecord {
 		return ARecord{}
 	}
 	return ARecord{
-		IP:   a.A.String(),
-		Type: a.Hdr.Rrtype,
-		TTL:  a.Hdr.Ttl,
+		RNAME: a.Hdr.Name,
+		IP:    a.A.String(),
+		Type:  a.Hdr.Rrtype,
+		TTL:   a.Hdr.Ttl,
 	}
 }
 
 func parseCNAMERecord(rr *dns.CNAME) CNAMERecord {
 	return CNAMERecord{
-		QueryName: rr.Hdr.Name,
-		Alias:     rr.Target,
+		Name:  rr.Hdr.Name,
+		Alias: rr.Target,
 	}
 }
