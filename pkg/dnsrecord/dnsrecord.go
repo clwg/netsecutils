@@ -13,7 +13,7 @@ type DNSRecords struct {
 	A     []ARecord     `json:"a"`
 	SPF   []string      `json:"spf"`
 	TXT   []string      `json:"txt"`
-	SRV   []string      `json:"srv"`
+	SRV   []SRVRecord   `json:"srv"`
 	CNAME []CNAMERecord `json:"cname"`
 }
 

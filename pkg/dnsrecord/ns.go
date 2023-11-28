@@ -6,7 +6,8 @@ import (
 )
 
 type NSRecord struct {
-	Nameserver string
+	Nameserver string `json:"nameserver"`
+	Domain     string `json:"domain"`
 }
 
 func GetNSRecords(domain string) []NSRecord {
@@ -15,7 +16,7 @@ func GetNSRecords(domain string) []NSRecord {
 	for _, rr := range rawRecords {
 		ns, ok := rr.(*dns.NS)
 		if ok {
-			nsRecords = append(nsRecords, NSRecord{Nameserver: ns.Ns})
+			nsRecords = append(nsRecords, NSRecord{Nameserver: ns.Ns, Domain: domain + "."})
 		}
 	}
 	return nsRecords
