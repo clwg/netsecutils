@@ -1,4 +1,5 @@
-
+# dnsmap
+The client-side component of a DNS forwarding path mapping process.
 
 ## DNS Mapping Process
 
