@@ -10,3 +10,21 @@ The DNS forwarding path mapping process consists of the following steps:
 3. Scan a range of IP addresses, using the corresponding encoded domain name for each query.
 4. Capture the queries on the authoritative server, noting both the source IP address and the decoded IP address from the subdomain. See [ipdecoder](https://github.com/clwg/netsecutils/tree/main/cmd/ipdecoder) for decoding methods.
 5. The combination of the source IP address and the decoded IP address reveals the initial and final hops of the recursive forwarding path taken by the DNS query.
+
+
+## DNS Forwarding Path
+The forwarding path is the sequence of DNS servers that the query traverses from the client to the resolver. The forwarding path is important because it can reveal information about the network topology and the DNS resolver configuration.  By controlling both the Client and the DNS Server, we can determine the forwarding path by observing the DNS query and response messages.  At scale this can be used to map aspects of a network topology and censorship infrastructure.
+
+```
++----------+         +-----------+        +-----------+        +------------+
+|  Client  |         | Resolver  |        | Forwarder |        | DNS Server |
++----------+         +-----------+        +-----------+        +------------+
+     |                    |                     |                    |
+     |-- Query for name ->|                     |                    |
+     |                    |--- Forward query -->|                    |
+     |                    |                     |--- Query name ---->|
+     |                    |                     |<---- Response  ----|
+     |                    |<---- Response  ---- |                    |
+     |<-- Response -------|                     |                    |
+     |                    |                     |                    |
+```
