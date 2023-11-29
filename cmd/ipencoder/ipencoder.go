@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/clwg/netsecutils/ipcipher"
+	"github.com/clwg/netsecutils/pkg/ipcipher"
 )
 
 func main() {

@@ -7,7 +7,7 @@ import (
 	"net"
 	"time"
 
-	jsonllogger "github.com/clwg/netsecutils/logging"
+	jsonllogger "github.com/clwg/netsecutils/pkg/logging"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
