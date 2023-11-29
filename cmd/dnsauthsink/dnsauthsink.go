@@ -13,25 +13,29 @@ import (
 )
 
 var (
-	defaultAnswer string
-	db            *sql.DB
+	defaultAnswer       string
+	listenAddress       string // Variable for listening address
+	db                  *sql.DB
+	useSourceIPAsAnswer bool // Flag to use source IP as the answer
 )
 
 func main() {
 	flag.StringVar(&defaultAnswer, "default-answer", "127.0.0.1", "Default answer for DNS queries")
+	flag.StringVar(&listenAddress, "listen", ":53", "The address to listen on for DNS queries")
+	flag.BoolVar(&useSourceIPAsAnswer, "use-source-ip", false, "Use source IP as answer")
 	flag.Parse()
 
 	// Initialize database
 	initDB()
 
-	// DNS server
+	// DNS server setup
 	dns.HandleFunc(".", handleRequest)
 
-	server := &dns.Server{Addr: ":53", Net: "udp"}
+	server := &dns.Server{Addr: listenAddress, Net: "udp"}
 	err := server.ListenAndServe()
 	defer server.Shutdown()
 	if err != nil {
-		log.Fatalf("Failed to start server: %s\n ", err.Error())
+		log.Fatalf("Failed to start server: %s\n", err.Error())
 	}
 }
 
@@ -42,7 +46,6 @@ func initDB() {
 		log.Fatal(err)
 	}
 
-	// Create table if not exists
 	createTableQuery := `CREATE TABLE IF NOT EXISTS dns_records (
 		id INTEGER PRIMARY KEY,
 		qname TEXT,
@@ -73,11 +76,9 @@ func handleRequest(w dns.ResponseWriter, r *dns.Msg) {
 	}
 
 	for _, q := range r.Question {
-		// Log the query
 		logQuery(ip, q.Name)
 
-		// Generate the answer
-		answer := findAnswer(q.Name)
+		answer := findAnswer(q.Name, ip)
 		rr, err := dns.NewRR(fmt.Sprintf("%s A %s", q.Name, answer))
 		if err == nil {
 			m.Answer = append(m.Answer, rr)
@@ -98,10 +99,13 @@ func logQuery(srcIP, qname string) {
 	}
 }
 
-func findAnswer(qname string) string {
+func findAnswer(qname, srcIP string) string {
+	if useSourceIPAsAnswer {
+		return srcIP
+	}
+
 	var answer string
 	err := db.QueryRow("SELECT answer FROM dns_records WHERE qname = ?", qname).Scan(&answer)
-
 	if err != nil {
 		return defaultAnswer
 	}
