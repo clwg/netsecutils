@@ -46,7 +46,7 @@ func main() {
 	records.A, records.CNAME = dnsrecord.GetARecords(*domainPtr)
 
 	if *srvPtr {
-		// sip enum
+		// srv enum
 		services := []struct {
 			service  string
 			protocol string
