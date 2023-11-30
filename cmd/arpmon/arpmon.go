@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"net"
 	"time"
@@ -22,51 +21,71 @@ type ARPPacket struct {
 	Operation    uint16 // ARP operation as a numeric code
 }
 
+// AppConfig holds configuration data for the ARP monitoring application.
+type AppConfig struct {
+	LoggerConfig jsonllogger.LoggerConfig
+	Device       string
+	Snaplen      int
+	Promisc      bool
+	Timeout      int
+}
+
 func main() {
-	// Log configuration defaults
-	var (
-		filenamePrefix = flag.String("filenamePrefix", "netsample", "Prefix for log filenames")
-		logDir         = flag.String("logDir", "../../logs/arpmon", "Directory for log files")
-		maxLines       = flag.Int("maxLines", 50000, "Maximum number of lines per log file")
-		rotationTime   = flag.Int("rotationTime", 30, "Log rotation time in minutes")
-	)
+	appConfig := parseFlags()
 
-	// PCAP configuration defaults
-	var (
-		device  = flag.String("device", "enp0s31f6", "Network device for packet capture")
-		snaplen = flag.Int("snaplen", 1600, "Snapshot length for packet capture")
-		promisc = flag.Bool("promisc", true, "Set the interface in promiscuous mode")
-		timeout = flag.Int("timeout", -1, "Timeout for packet capture in seconds")
-	)
-
-	flag.Parse()
-
-	config := jsonllogger.LoggerConfig{
-		FilenamePrefix: *filenamePrefix,
-		LogDir:         *logDir,
-		MaxLines:       *maxLines,
-		RotationTime:   time.Duration(*rotationTime) * time.Minute,
+	jsonLogger, err := jsonllogger.NewLogger(appConfig.LoggerConfig)
+	if err != nil {
+		log.Fatalf("Failed to initialize logger: %v", err)
 	}
 
-	jsonLogger, err := jsonllogger.NewLogger(config)
+	packetSource, handle, err := setupPacketCapture(appConfig)
 	if err != nil {
-		panic(err)
-	}
-
-	// Open the device for capturing
-	handle, err := pcap.OpenLive(*device, int32(*snaplen), *promisc, time.Duration(*timeout)*time.Second)
-	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to setup packet capture: %v", err)
 	}
 	defer handle.Close()
 
-	// Set the filter for ARP packets
+	processPackets(packetSource, jsonLogger)
+}
+
+// parseFlags parses command-line flags into an AppConfig.
+func parseFlags() AppConfig {
+	var config AppConfig
+	var rotationTimeInMinutes int // Intermediate variable for rotation time
+
+	flag.StringVar(&config.LoggerConfig.FilenamePrefix, "filenamePrefix", "armon", "Prefix for log filenames")
+	flag.StringVar(&config.LoggerConfig.LogDir, "logDir", "./logs", "Directory for log files")
+	flag.IntVar(&config.LoggerConfig.MaxLines, "maxLines", 50000, "Maximum number of lines per log file")
+	flag.IntVar(&rotationTimeInMinutes, "rotationTime", 30, "Log rotation time in minutes") // Use the intermediate variable here
+
+	flag.StringVar(&config.Device, "device", "enp0s31f6", "Network device for packet capture")
+	flag.IntVar(&config.Snaplen, "snaplen", 1600, "Snapshot length for packet capture")
+	flag.BoolVar(&config.Promisc, "promisc", true, "Set the interface in promiscuous mode")
+	flag.IntVar(&config.Timeout, "timeout", -1, "Timeout for packet capture in seconds")
+
+	flag.Parse()
+
+	config.LoggerConfig.RotationTime = time.Duration(rotationTimeInMinutes) * time.Minute // Convert to time.Duration
+
+	return config
+}
+
+// setupPacketCapture initializes and returns a new packet capture source.
+func setupPacketCapture(config AppConfig) (*gopacket.PacketSource, *pcap.Handle, error) {
+	handle, err := pcap.OpenLive(config.Device, int32(config.Snaplen), config.Promisc, time.Duration(config.Timeout)*time.Second)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	if err := handle.SetBPFFilter("arp"); err != nil {
-		log.Fatal(err)
+		return nil, nil, err
 	}
 
 	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
+	return packetSource, handle, nil
+}
 
+// processPackets processes packets from the given source and logs ARP packets.
+func processPackets(packetSource *gopacket.PacketSource, jsonLogger *jsonllogger.Logger) {
 	for packet := range packetSource.Packets() {
 		arpLayer := packet.Layer(layers.LayerTypeARP)
 		if arpLayer != nil {
@@ -79,7 +98,6 @@ func main() {
 				Operation:    arp.Operation,
 			}
 			jsonLogger.Log(arpPacket)
-			fmt.Println(arpPacket)
 		}
 	}
 }
