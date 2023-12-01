@@ -2,13 +2,17 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"os/signal"
 	"strconv"
 	"strings"
 	"time"
+
+	jsonllogger "github.com/clwg/netsecutils/pkg/logging"
 )
 
 type ConnectionInfo struct {
@@ -18,10 +22,21 @@ type ConnectionInfo struct {
 	DestinationPort int    `json:"destination_port"`
 }
 
+type AppConfig struct {
+	LoggerConfig jsonllogger.LoggerConfig
+}
+
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("Usage: sinkhole <port1> <port2> <port3-range5> ...")
 		os.Exit(1)
+	}
+
+	appConfig := parseFlags()
+
+	jsonLogger, err := jsonllogger.NewLogger(appConfig.LoggerConfig)
+	if err != nil {
+		log.Fatalf("Failed to initialize logger: %v", err)
 	}
 
 	ports := parsePorts(os.Args[1:])
@@ -37,10 +52,30 @@ func main() {
 	}()
 
 	for _, port := range ports {
-		go startSinkholeServer(port)
+		go startSinkholeServer(port, jsonLogger)
 	}
 
 	select {} // Block main goroutine to prevent exit
+}
+
+func parseFlags() AppConfig {
+	var config AppConfig
+
+	filenamePrefix := flag.String("filenamePrefix", "sinkholeserver", "Prefix for log filenames")
+	logDir := flag.String("logDir", "./logs", "Directory for log files")
+	maxLines := flag.Int("maxLines", 10000, "Maximum number of lines per log file")
+	rotationTime := flag.Int("rotationTime", 60, "Log rotation time in minutes")
+
+	flag.Parse()
+
+	config.LoggerConfig = jsonllogger.LoggerConfig{
+		FilenamePrefix: *filenamePrefix,
+		LogDir:         *logDir,
+		MaxLines:       *maxLines,
+		RotationTime:   time.Duration(*rotationTime) * time.Minute,
+	}
+
+	return config
 }
 
 func parsePorts(args []string) []string {
@@ -63,7 +98,7 @@ func parsePorts(args []string) []string {
 	return ports
 }
 
-func startSinkholeServer(port string) {
+func startSinkholeServer(port string, jsonLogger *jsonllogger.Logger) {
 	addr := net.UDPAddr{
 		Port: parseInt(port),
 		IP:   net.ParseIP("0.0.0.0"),
@@ -78,11 +113,11 @@ func startSinkholeServer(port string) {
 	fmt.Println("Starting sinkhole server on port", port)
 
 	for {
-		handleConnection(conn, parseInt(port))
+		handleConnection(conn, parseInt(port), jsonLogger)
 	}
 }
 
-func handleConnection(conn *net.UDPConn, destPort int) {
+func handleConnection(conn *net.UDPConn, destPort int, jsonLogger *jsonllogger.Logger) {
 	buf := make([]byte, 1024)
 	_, addr, err := conn.ReadFromUDP(buf)
 	if err != nil {
@@ -99,6 +134,7 @@ func handleConnection(conn *net.UDPConn, destPort int) {
 	connInfoJSON, _ := json.Marshal(connInfo)
 
 	fmt.Println(string(connInfoJSON))
+	jsonLogger.Log(connInfo) // Logging the connection info using jsonLogger
 
 	_, err = conn.WriteToUDP([]byte("true"), addr)
 	if err != nil {
